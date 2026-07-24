@@ -151,3 +151,47 @@ def get_higher_dimensional_flux(s_m: float) -> float:
         # Puncture active (S_M >= 1): Non-zero flux branch
         kappa_crit = 1e38  # Reference critical flux capacity
         return kappa_crit * (s_m - 1.0)
+        # ==============================================================================
+# CLASSICAL NOVAE & SURFACE SHRUGS (S_M_surface -> 1)
+# ==============================================================================
+
+def calculate_surface_shrug_metric(d_core: float, delta_d_acc: float, phi_surface: float) -> float:
+    """
+    Calculates Equation (3) for a Pseudo-Critical Surface Shrug in a Classical Nova:
+        S_M_surface = ((D_core + delta_D_acc) * Phi_surface) / epsilon_M -> 1_surface
+        
+    Parameters:
+        d_core (float): Base mass-density parameter of underlying WD core.
+        delta_d_acc (float): Accreted surface layer density contribution.
+        phi_surface (float): Curvature intensity parameter evaluated at the surface.
+        
+    Returns:
+        float: Surface Saturation Metric (S_M_surface).
+    """
+    d_total = d_core + delta_d_acc
+    s_m_surface = (d_total * phi_surface * (RHO_PLANCK * (C**2))) / EPSILON_M
+    return s_m_surface
+
+
+def check_surface_shrug_trigger(s_m_surface: float, s_m_core: float) -> dict:
+    """
+    Evaluates whether an accreted surface shell triggers a Surface Shrug explosion 
+    while preserving underlying core structural integrity.
+    
+    Parameters:
+        s_m_surface (float): Computed surface metric.
+        s_m_core (float): Computed core metric.
+        
+    Returns:
+        dict: Shrug status, core status, and higher-dimensional flux state.
+    """
+    shrug_triggered = s_m_surface >= 0.98
+    core_intact = s_m_core < 0.90
+    
+    return {
+        "shrug_triggered": shrug_triggered,
+        "core_intact": core_intact,
+        "kappa_flux": 0.0,  # 3D spatial container limits intact (kappa_flux = 0)
+        "regime": "Pseudo-Critical Surface Shrug (RS Oph / U Sco type)" if (shrug_triggered and core_intact) else "Stable Accretion / Sub-threshold"
+    }
+
