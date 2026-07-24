@@ -111,3 +111,43 @@ def get_sm_regime(s_m: float) -> str:
         return "Critical Nodal Transition (S_M = 1): R_d Interface Materialization (Black Hole)"
     else:
         return "Super-Critical Over-Saturation (S_M >> 1): Venting Jet Dynamics (Hypernova / Kilonova)"
+# ==============================================================================
+# SUB-CRITICAL STATES (S_M < 1) - WHITE DWARF METRIC CONTAINERS
+# ==============================================================================
+
+def calculate_wd_subcritical_metric(d_deg: float, phi_local: float) -> float:
+    """
+    Calculates Equation (2) for a White Dwarf sub-critical metric container:
+        S_M_WD = (D_deg * Phi_local) / epsilon_M << 1
+        
+    Parameters:
+        d_deg (float): Degenerate electron mass-density parameter (rho_deg / rho_Planck).
+        phi_local (float): Localized curvature scalar for degenerate core.
+        
+    Returns:
+        float: S_M value (strictly << 1).
+    """
+    s_m_wd = (d_deg * phi_local * (RHO_PLANCK * (C**2))) / EPSILON_M
+    return s_m_wd
+
+
+def get_higher_dimensional_flux(s_m: float) -> float:
+    """
+    Evaluates orthogonal higher-dimensional metric energy flux (kappa_flux).
+    
+    For sub-critical states (S_M < 1), no topological puncture occurs at R_d,
+    resulting in zero higher-dimensional flux (kappa_flux = 0). All energy is 
+    trapped within 3D spatial constraints (Metric Retentiveness).
+    
+    Parameters:
+        s_m (float): Local saturation metric.
+        
+    Returns:
+        float: Orthogonal energy flux vector magnitude kappa_flux [J s^-1 m^-2].
+    """
+    if s_m < 1.0:
+        return 0.0  # Denied orthogonal flux paths (kappa_flux = 0)
+    else:
+        # Puncture active (S_M >= 1): Non-zero flux branch
+        kappa_crit = 1e38  # Reference critical flux capacity
+        return kappa_crit * (s_m - 1.0)
