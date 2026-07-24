@@ -462,4 +462,53 @@ def get_topological_rejection_taxonomy() -> list:
             "remnant": "Highly Magnetized Remnant"
         }
     ]
+# ==============================================================================
+# CRITICAL & SUPER-CRITICAL IGNITIONS (S_M >= 1): NODAL MATURITY & SINGULARITY REGULARIZATION
+# ==============================================================================
+
+def calculate_regularized_laminar_radius(mass_kg: float, kappa_flux: float, kappa_crit: float = 1.0e39) -> float:
+    """
+    Calculates the finite, regularized 2D laminar boundary radius R_d:
+        R_d = (2 * G * M / c^2) * [1 + sqrt(1 - kappa_flux / kappa_crit)]
+
+    Parameters:
+        mass_kg (float): Node mass in kg.
+        kappa_flux (float): Higher-dimensional energy flux rate (W or kg/s equivalent).
+        kappa_crit (float): Critical flux capacity threshold.
+
+    Returns:
+        float: Regularized radius R_d in meters (prevents non-physical r -> 0 singularity).
+    """
+    r_s = (2.0 * G * mass_kg) / (C**2)
+    flux_ratio = min(max(kappa_flux / kappa_crit, 0.0), 1.0)
+    r_d = r_s * (1.0 + np.sqrt(1.0 - flux_ratio))
+    return r_d
+
+
+def calculate_stellar_birth_cry_luminosity(mass_kg: float, kappa_flux: float) -> dict:
+    """
+    Computes the hard X-ray / Gamma-ray 'Stellar Birth Cry' energy yield upon 
+    initial materialization and activation of the 4D orthogonal conduit.
+
+    Parameters:
+        mass_kg (float): Stellar-mass node mass in kg (~3 to 20 M_sun).
+        kappa_flux (float): Orthogonal flux rate.
+
+    Returns:
+        dict: Birth Cry peak luminosity, regularized radius, and empirical status.
+    """
+    m_sun_units = mass_kg / SOLAR_MASS
+    r_d = calculate_regularized_laminar_radius(mass_kg, kappa_flux)
+    
+    # Peak hard X-ray / Gamma-ray burst power [Watts]
+    p_birth_cry = 1.0e38 * (m_sun_units / 10.0) * (kappa_flux / 1.0e39)
+    
+    return {
+        "s_m": 1.0,
+        "singularity_regularized": True,
+        "regularized_radius_m": r_d,
+        "kappa_flux": kappa_flux,
+        "birth_cry_luminosity_watts": p_birth_cry,
+        "regime": "Super-Critical Nodal Maturity (Cygnus X-1 / M33 X-7)"
+    }
 
