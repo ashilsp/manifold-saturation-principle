@@ -386,3 +386,80 @@ def calculate_manifold_torsion_and_bfield(s_m_surface: float, phi_spin: float) -
             "starquake_flare_energy_joules": 0.0,
             "regime": "Standard Sub-Critical Remnant"
         }
+        # ==============================================================================
+# CORE-COLLAPSE REJECTION & TOPOLOGICAL FAILURE MODES (Type II Supernovae)
+# ==============================================================================
+
+def check_core_collapse_rejection(s_m_core: float, entropy_per_baryon: float, asymmetry_factor: float) -> dict:
+    """
+    Evaluates whether a collapsing massive star core (S_M_core -> 1) achieves a coherent 
+    2D laminar boundary (R_d) or suffers an entropic/turbulent topological rejection.
+
+    Parameters:
+        s_m_core (float): Local core metric saturation value.
+        entropy_per_baryon (float): Entropy scale S/k_B (high entropy drives turbulence).
+        asymmetry_factor (float): Hydrodynamic/rotational asymmetry index [0.0 to 1.0].
+
+    Returns:
+        dict: Phase transition outcome, shock rebound energy, and remnant classification.
+    """
+    # Threshold for turbulence/entropy preventing coherent R_d stenting
+    turbulence_index = entropy_per_baryon * (1.0 + asymmetry_factor)
+    critical_turbulence_limit = 4.0
+
+    if s_m_core >= 0.95 and turbulence_index > critical_turbulence_limit:
+        return {
+            "rd_stent_formed": False,
+            "topological_rejection": True,
+            "kappa_flux": 0.0,  # 4D conduit denied
+            "shock_rebound_kinetic_energy_joules": 1.5e44,  # Rebound kinetic shock in 3D
+            "ejecta_asymmetry_index": asymmetry_factor * 2.5,
+            "remnant_type": "Neutron Star / Pulsar",
+            "regime": "Core-Collapse Rejection (Type II Supernova / Cassiopeia A)"
+        }
+    else:
+        return {
+            "rd_stent_formed": True,
+            "topological_rejection": False,
+            "kappa_flux": 1.0e39,
+            "shock_rebound_kinetic_energy_joules": 0.0,
+            "ejecta_asymmetry_index": 0.1,
+            "remnant_type": "Stellar Mass Black Hole",
+            "regime": "Successful 4D OCM Ignition"
+        }
+
+
+def get_topological_rejection_taxonomy() -> list:
+    """
+    Returns the comprehensive taxonomy table of topological rejections at the metric boundary.
+    
+    Returns:
+        list of dicts: Metric failure regimes, initial states, mechanisms, and remnants.
+    """
+    return [
+        {
+            "event_type": "Recurrent Nova",
+            "initial_state": "S_M^core << 1, S_M^surf -> 1",
+            "mechanism": "Localized Surface Shrug",
+            "remnant": "Intact Degenerate Core"
+        },
+        {
+            "event_type": "Type Ia Supernova",
+            "initial_state": "S_M^global -> 1",
+            "mechanism": "Uniform Volume Snap-Back",
+            "remnant": "Total Progenitor Disruption"
+        },
+        {
+            "event_type": "Type II Supernova",
+            "initial_state": "S_M^core -> 1",
+            "mechanism": "Turbulent Core Rejection",
+            "remnant": "Neutron Star / Pulsar"
+        },
+        {
+            "event_type": "Magnetar Starquake",
+            "initial_state": "S_M ~ 1",
+            "mechanism": "Torsional Metric Knotting",
+            "remnant": "Highly Magnetized Remnant"
+        }
+    ]
+
