@@ -194,4 +194,62 @@ def check_surface_shrug_trigger(s_m_surface: float, s_m_core: float) -> dict:
         "kappa_flux": 0.0,  # 3D spatial container limits intact (kappa_flux = 0)
         "regime": "Pseudo-Critical Surface Shrug (RS Oph / U Sco type)" if (shrug_triggered and core_intact) else "Stable Accretion / Sub-threshold"
     }
+# ==============================================================================
+# TYPE IA SUPERNOVAE & GLOBAL METRIC SNAP-BACK (S_M_global -> 1)
+# ==============================================================================
+
+def calculate_type_ia_global_metric(d_uniform: float, mass_core: float, radius_core: float) -> float:
+    """
+    Calculates the global saturation metric S_M_global for a degenerate C-O White Dwarf
+    approaching the Chandrasekhar limit (M ~ 1.44 M_sun) with a nearly uniform density profile.
+
+    Parameters:
+        d_uniform (float): Average uniform mass-density ratio (rho_avg / rho_Planck).
+        mass_core (float): Stellar core mass in kg (~1.44 M_sun).
+        radius_core (float): Radius of the core in meters.
+
+    Returns:
+        float: Global Saturation Metric S_M_global.
+    """
+    r_s = (2.0 * G * mass_core) / (C**2)
+    phi_global = r_s / (2.0 * radius_core)
+    s_m_global = (d_uniform * phi_global * (RHO_PLANCK * (C**2))) / (EPSILON_M / (radius_core**2))
+    return s_m_global
+
+
+def check_rd_stent_organization(density_gradient_scale: float) -> dict:
+    """
+    Evaluates whether a collapsing core can organize a localized 2D laminar boundary (R_d).
+
+    Without a steep core-density gradient (e.g., in isotropic degenerate C-O cores),
+    the core reaches S_M ~ 1 simultaneously across its volume, preventing localized
+    stenting (R_d fails to organize) and forcing total 3D metric snap-back.
+
+    Parameters:
+        density_gradient_scale (float): Core density gradient scale height (d(rho)/dr).
+
+    Returns:
+        dict: Stent status, snap-back trigger state, and total energy release.
+    """
+    # Threshold for steep density gradient necessary to localize R_d
+    steep_gradient_threshold = 1.0e-3
+
+    if density_gradient_scale < steep_gradient_threshold:
+        return {
+            "rd_stent_formed": False,
+            "snapback_triggered": True,
+            "kappa_flux": 0.0,  # Denied 4D flux stent
+            "energy_release_joules": 1.0e44,  # Total thermonuclear binding energy liberated
+            "central_remnant": None,  # No core remnant left behind
+            "regime": "Global Metric Snap-Back (Type Ia Supernova / SN 2011fe)"
+        }
+    else:
+        return {
+            "rd_stent_formed": True,
+            "snapback_triggered": False,
+            "kappa_flux": 1.0e38,
+            "energy_release_joules": 0.0,
+            "central_remnant": "Compact Core",
+            "regime": "Localized Core Puncture"
+        }
 
