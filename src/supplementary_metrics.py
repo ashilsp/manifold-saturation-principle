@@ -149,4 +149,56 @@ def calculate_stress_energy_decoupling(s_m: float, kappa_crit: float = 1.0e39) -
         "orthogonal_flux_kappa": kappa_flux,
         "decoupled": True
     }
+# ==============================================================================
+# FULL MATHEMATICAL DERIVATION: S_M & (4+1)D TENSOR DECOMPOSITION MECHANICS
+# ==============================================================================
+
+def calculate_local_ricci_scalar(rho_kg_m3: float, pressure_pa: float, angular_momentum_j: float, volume_m3: float) -> float:
+    """
+    Calculates the localized 3D trace-free Ricci curvature scalar R_local:
+        R_local = (8*pi*G / c^4) * (rho * c^2 + P) + (8*pi*G / c^4) * (J / (V * c))^2
+    """
+    prefactor = (8.0 * np.pi * G) / (C**4)
+    matter_term = rho_kg_m3 * (C**2) + pressure_pa
+    rotation_term = (angular_momentum_j / (volume_m3 * C))**2
+    
+    return prefactor * (matter_term + rotation_term)
+
+
+def calculate_spatial_stress_integral(mass_kg: float, radius_m: float, spin_j: float = 0.0) -> float:
+    """
+    Computes the total 3D spatial stress integral Omega_stress:
+        Omega_stress = integral (R_local + K_ij K^ij - K^2) sqrt(gamma) d^3x
+    """
+    volume = (4.0 / 3.0) * np.pi * (radius_m**3)
+    rho = mass_kg / volume
+    pressure = 0.0  # Dominant relativistic rest-mass contribution
+    
+    r_local = calculate_local_ricci_scalar(rho, pressure, spin_j, volume)
+    
+    # Scale spatial stress by effective volume interaction
+    omega_stress = r_local * volume * EPSILON_M
+    return omega_stress
+
+
+def calculate_4plus1_tensor_decomposition(s_m: float, kappa_crit: float = 1.0e39) -> dict:
+    """
+    Calculates the (4+1)D stress-energy tensor coordinate decomposition:
+        T^(4+1) -> Surface Stress S_munu + Orthogonal Flux J_flux^mu
+    """
+    if s_m < 1.0:
+        return {
+            "j_flux_magnitude": 0.0,
+            "s_tangent_stress": s_m * EPSILON_M,
+            "is_stented": False
+        }
+    
+    j_flux = kappa_crit * (1.0 - (1.0 / (s_m**2)))
+    s_tangent = EPSILON_M  # Saturated at maximum elastic ceiling
+    
+    return {
+        "j_flux_magnitude": j_flux,
+        "s_tangent_stress": s_tangent,
+        "is_stented": True
+    }
 
