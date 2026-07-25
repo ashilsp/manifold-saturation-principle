@@ -69,3 +69,84 @@ def calculate_rotating_curvature(mass_kg: float, radius_m: float, theta_rad: flo
     spin_factor = 1.0 + ((spin_a / rho_g)**2) * (np.cos(theta_rad)**2)
     
     return phi_base * spin_factor
+    # ==============================================================================
+# ISRAEL JUNCTION CONDITIONS & R_d PHASE TRANSITION MATHEMATICAL MECHANICS
+# ==============================================================================
+
+def calculate_extrinsic_curvature_jump(mass_kg: float, s_m: float) -> dict:
+    """
+    Calculates the extrinsic curvature jump [K_ij] = K_ij^+ - K_ij^- across 
+    the null boundary hypersurface Sigma_d at r = R_d.
+
+    Parameters:
+        mass_kg (float): Stellar node mass in kg.
+        s_m (float): Metric saturation scalar S_M.
+
+    Returns:
+        dict: Inner curvature K_minus, outer curvature K_plus, and jump delta_K.
+    """
+    r_s = (2.0 * G * mass_kg) / (C**2)
+    # At S_M >= 1, R_d radius is regularized
+    r_d = r_s if s_m >= 1.0 else r_s / max(s_m, 1.0e-3)
+    
+    # Schwarzschild extrinsic curvature limits across surface
+    k_minus = 0.0 if s_m < 1.0 else (1.0 / r_d) * np.sqrt(1.0 - r_s / r_d)
+    k_plus = (1.0 / r_d)
+    
+    delta_k = k_plus - k_minus
+    
+    return {
+        "k_minus": k_minus,
+        "k_plus": k_plus,
+        "extrinsic_curvature_jump": delta_k,
+        "r_d_m": r_d
+    }
+
+
+def calculate_israel_surface_stress(s_m: float, mass_kg: float) -> float:
+    """
+    Computes the Israel Junction surface stress component S_ij:
+        S_ij = - (c^4 / 8*pi*G) * ([K_ij] - h_ij * [K]) * (1 - 1 / S_M)
+
+    Parameters:
+        s_m (float): Metric saturation scalar.
+        mass_kg (float): Node mass in kg.
+
+    Returns:
+        float: Tangential surface stress S_ij [N/m or Pa equivalent].
+    """
+    if s_m < 1.0:
+        return 0.0  # Retentive domain: no surface stress shell formed
+    
+    jump_data = calculate_extrinsic_curvature_jump(mass_kg, s_m)
+    delta_k = jump_data["extrinsic_curvature_jump"]
+    
+    # Israel junction prefactor: EPSILON_M * delta_K * (1 - 1/S_M)
+    s_ij = EPSILON_M * delta_k * (1.0 - (1.0 / s_m))
+    return s_ij
+
+
+def calculate_stress_energy_decoupling(s_m: float, kappa_crit: float = 1.0e39) -> dict:
+    """
+    Evaluates the tensorial decoupling of T_munu across Sigma_d:
+        T_munu^(3D) = S_munu * delta(Sigma_d) + n_mu * n_nu * kappa_flux
+
+    Returns:
+        dict: Surface stress weight and orthogonal flux magnitude.
+    """
+    if s_m < 1.0:
+        return {
+            "surface_stress_weight": 1.0,
+            "orthogonal_flux_kappa": 0.0,
+            "decoupled": False
+        }
+    
+    kappa_flux = kappa_crit * (1.0 - (1.0 / (s_m**2)))
+    surface_weight = 1.0 / s_m
+    
+    return {
+        "surface_stress_weight": surface_weight,
+        "orthogonal_flux_kappa": kappa_flux,
+        "decoupled": True
+    }
+
