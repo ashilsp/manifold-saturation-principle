@@ -511,4 +511,45 @@ def calculate_stellar_birth_cry_luminosity(mass_kg: float, kappa_flux: float) ->
         "birth_cry_luminosity_watts": p_birth_cry,
         "regime": "Super-Critical Nodal Maturity (Cygnus X-1 / M33 X-7)"
     }
+# ==============================================================================
+# KILONOVAE & COMPACT BINARY MERGERS: MANIFOLD SPLICING (S_M^composite > 1)
+# ==============================================================================
+
+def calculate_manifold_splicing_metrics(mass1_ns: float, mass2_ns: float, ejecta_velocity_c: float = 0.2) -> dict:
+    """
+    Computes curvature fusion, lateral un-stented ejecta mass, and r-process 
+    heavy element yield during binary neutron star manifold splicing.
+
+    Parameters:
+        mass1_ns (float): Primary NS mass in kg (~1.3 to 1.6 M_sun).
+        mass2_ns (float): Secondary NS mass in kg (~1.2 to 1.4 M_sun).
+        ejecta_velocity_c (float): Ejecta velocity as a fraction of c (~0.1c to 0.3c).
+
+    Returns:
+        dict: Composite S_M, dynamic ejecta mass, r-process yield, and relaxation timescale.
+    """
+    total_mass_kg = mass1_ns + mass2_ns
+    total_m_sun = total_mass_kg / SOLAR_MASS
+    
+    # Composite saturation spikes super-critically upon contact
+    s_m_composite = 1.05 + 0.1 * (total_m_sun - 2.7)
+    
+    # Lateral un-stented dynamic ejecta mass [Solar Masses]
+    m_ejecta_msun = 0.01 + 0.03 * (ejecta_velocity_c / 0.2) * (total_m_sun / 2.7)
+    m_ejecta_kg = m_ejecta_msun * SOLAR_MASS
+    
+    # Heavy element r-process yield (Gold, Platinum, Uranium) [kg]
+    r_process_yield_kg = m_ejecta_kg * 0.05
+    
+    # Manifold relaxation timescale into single R_d node [seconds]
+    relaxation_time_s = 50.0 * (2.7 / total_m_sun)
+
+    return {
+        "s_m_composite": s_m_composite,
+        "manifold_spliced": True,
+        "ejecta_mass_msun": m_ejecta_msun,
+        "r_process_yield_kg": r_process_yield_kg,
+        "relaxation_timescale_s": relaxation_time_s,
+        "regime": "Manifold Splicing Kilonova (GW170817 / AT2017gfo)"
+    }
 
