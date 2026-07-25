@@ -229,3 +229,58 @@ def calculate_boundary_jump_integral(s_m: float, delta_r: float, kappa_crit: flo
     flux_inf = calculate_kappa_flux(s_m, kappa_crit)
     integral_value = flux_inf * (1.0 - np.exp(-1.0 / (delta_r + 1.0e-9)))
     return integral_value
+    # Vacuum Permeability constant [T m / A or N / A^2]
+MU_0 = 4.0 * np.pi * 1.0e-7
+
+# ==============================================================================
+# TORSIONAL STRESS TENSOR (tau) AND MAGNETIC INDUCTION (B)
+# ==============================================================================
+
+def calculate_metric_torsion_vector(mass_kg: float, radius_m: float, spin_j: float) -> float:
+    """
+    Computes magnitude of spatial manifold torsion vector |tau| = |curl(e_metric)|:
+        tau ~ (G * J) / (c^2 * r^3)
+
+    Parameters:
+        mass_kg (float): Stellar node mass [kg].
+        radius_m (float): Radius [m].
+        spin_j (float): Angular momentum J [kg m^2 / s].
+
+    Returns:
+        float: Torsion vector magnitude |tau| [m^-1].
+    """
+    if radius_m <= 0:
+        return 0.0
+    return (G * spin_j) / ((C**2) * (radius_m**3))
+
+
+def calculate_induced_magnetic_field(tau_magnitude: float) -> float:
+    """
+    Computes magnetic induction field B [Tesla] from metric torsion tau via:
+        B = sqrt(c^4 / (G * mu_0)) * tau
+
+    Returns:
+        float: Induced magnetic field B in Tesla (1 Tesla = 10^4 Gauss).
+    """
+    coupling_factor = np.sqrt((C**4) / (G * MU_0))
+    b_tesla = coupling_factor * tau_magnitude
+    return b_tesla
+
+
+def calculate_magnetar_induction_profile(mass_kg: float, radius_m: float, spin_j: float) -> dict:
+    """
+    Full Einstein-Maxwell-Cartan electrodynamic coupling calculation.
+
+    Returns:
+        dict: Torsion magnitude, B in Tesla, and B in Gauss.
+    """
+    tau_mag = calculate_metric_torsion_vector(mass_kg, radius_m, spin_j)
+    b_tesla = calculate_induced_magnetic_field(tau_mag)
+    b_gauss = b_tesla * 1.0e4  # Convert Tesla to Gauss
+
+    return {
+        "torsion_m1": tau_mag,
+        "b_tesla": b_tesla,
+        "b_gauss": b_gauss
+    }
+
