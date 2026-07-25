@@ -552,4 +552,53 @@ def calculate_manifold_splicing_metrics(mass1_ns: float, mass2_ns: float, ejecta
         "relaxation_timescale_s": relaxation_time_s,
         "regime": "Manifold Splicing Kilonova (GW170817 / AT2017gfo)"
     }
+# ==============================================================================
+# HYPERNOVAE & LONG GAMMA-RAY BURSTS (S_M >> 1): POLAR VENTING & JET COLLIMATION
+# ==============================================================================
+
+def calculate_polar_venting_profile(theta_rad: float, s_m: float, kappa_flux: float, eta_m: float = 1.0) -> float:
+    """
+    Calculates the angular polar flux venting intensity:
+        Phi_vent(theta) = kappa_flux * cos^2(theta) * (S_M / eta_M)
+
+    Parameters:
+        theta_rad (float): Polar angle from rotation axis in radians [0 to pi].
+        s_m (float): Super-critical metric saturation scalar (S_M >> 1).
+        kappa_flux (float): Higher-dimensional energy flux capacity.
+        eta_m (float): Manifold viscosity parameter.
+
+    Returns:
+        float: Angular flux density Phi_vent.
+    """
+    return kappa_flux * (np.cos(theta_rad)**2) * (s_m / eta_m)
+
+
+def calculate_hypernova_lgrb_metrics(mass_msun: float, spin_j_norm: float, s_m: float = 2.5) -> dict:
+    """
+    Computes relativistic polar jet parameters, beaming angle, isotropic equivalent 
+    energy (E_iso), and Lorentz factor Gamma for super-critical LGRB ignitions.
+
+    Parameters:
+        mass_msun (float): Progenitor core mass in solar masses (~20 to 40 M_sun).
+        spin_j_norm (float): Normalized spin angular momentum J / (M * c * R) [0.0 to 1.0].
+        s_m (float): Super-critical saturation scalar (S_M >> 1).
+
+    Returns:
+        dict: Jet opening angle, Lorentz factor, E_iso, and empirical assignment.
+    """
+    # High spin chokes equatorial closure, focusing flux into polar beam
+    jet_half_angle_deg = max(2.0, 15.0 * (1.0 - spin_j_norm))
+    lorentz_factor_gamma = 100.0 * spin_j_norm * (s_m / 2.0)
+    
+    # Isotropic equivalent energy E_iso [Joules] (10^44 to 10^47 J)
+    e_iso_joules = 1.0e45 * (s_m**2) * (spin_j_norm / 0.8)**2
+    
+    return {
+        "s_m": s_m,
+        "equatorial_choke": True,
+        "jet_half_angle_deg": jet_half_angle_deg,
+        "lorentz_factor_gamma": lorentz_factor_gamma,
+        "e_iso_joules": e_iso_joules,
+        "regime": "Hypernova / Long Gamma-Ray Burst (SN 1998bw / GRB 980425)"
+    }
 
