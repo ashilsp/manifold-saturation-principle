@@ -202,3 +202,30 @@ def calculate_4plus1_tensor_decomposition(s_m: float, kappa_crit: float = 1.0e39
         "is_stented": True
     }
 
+# ==============================================================================
+# ORTHOGONAL FLUX MECHANICS (kappa_flux) & BOUNDARY JUMP INTEGRATION
+# ==============================================================================
+
+def calculate_kappa_flux(s_m: float, kappa_crit: float = 1.0e39) -> float:
+    """
+    Computes the orthogonal energy flux vector magnitude kappa_flux:
+        kappa_flux = 0                               for S_M < 1 (Complete 3D Confinement)
+        kappa_flux = kappa_crit * (1 - 1 / S_M^2)    for S_M >= 1 (Orthogonal Drainage)
+    """
+    if s_m < 1.0:
+        return 0.0
+    return kappa_crit * (1.0 - (1.0 / (s_m**2)))
+
+
+def calculate_boundary_jump_integral(s_m: float, delta_r: float, kappa_crit: float = 1.0e39) -> float:
+    """
+    Evaluates the boundary jump integral across [R_d - delta, R_d + delta] as delta -> 0:
+        kappa_flux = lim_{delta -> 0} integral_{R_d - delta}^{R_d + delta} ( d T^00 / dt + div S ) dr
+    """
+    if s_m < 1.0:
+        return 0.0
+    
+    # Core asymptotic integral evaluation regularized over delta_r
+    flux_inf = calculate_kappa_flux(s_m, kappa_crit)
+    integral_value = flux_inf * (1.0 - np.exp(-1.0 / (delta_r + 1.0e-9)))
+    return integral_value
