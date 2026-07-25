@@ -283,4 +283,58 @@ def calculate_magnetar_induction_profile(mass_kg: float, radius_m: float, spin_j
         "b_tesla": b_tesla,
         "b_gauss": b_gauss
     }
+# ==============================================================================
+# CHANDRASEKHAR BOUNDARY LIMIT SENSITIVITY & COMPOSITION DEPENDENCE
+# ==============================================================================
+
+def calculate_mean_molecular_weight_e(x_carbon: float) -> float:
+    """
+    Computes mean molecular weight per electron mu_e(X_C) = (2 - X_C)^(-1).
+
+    Parameters:
+        x_carbon (float): Mass fraction of Carbon (0.0 <= X_C <= 1.0).
+
+    Returns:
+        float: mu_e value (0.5 for pure C/O equal mix up to higher for carbon rich).
+    """
+    x_c = np.clip(x_carbon, 0.0, 1.0)
+    return 1.0 / (2.0 - x_c)
+
+
+def calculate_global_chandrasekhar_sm(
+    mass_ratio: float,
+    x_carbon: float,
+    r_norm: float,
+    gamma_coulomb: float = 0.12,
+    phi_core_ratio: float = 1.0
+) -> float:
+    """
+    Computes global Manifold Saturation Metric S_M^global(M, X_C, r):
+        S_M = (M / M_Ch)^2 * [ 1 + gamma * (mu_e(X_C) / mu_e0 - 1) ] * (Phi_core / epsilon_M) * f(r)
+
+    Parameters:
+        mass_ratio (float): M / M_Ch ratio (typically ~ 0.99 - 1.0).
+        x_carbon (float): Mass fraction of carbon X_C.
+        r_norm (float): Normalized radial coordinate r / R_core (0.0 to 1.0).
+        gamma_coulomb (float): Coulomb screening factor (~0.12).
+        phi_core_ratio (float): Ratio of core curvature potential to epsilon_M.
+
+    Returns:
+        float: Saturation metric scalar S_M at radius r.
+    """
+    mu_e = calculate_mean_molecular_weight_e(x_carbon)
+    mu_e_0 = calculate_mean_molecular_weight_e(0.5)  # Baseline reference
+    
+    screening_term = 1.0 + gamma_coulomb * ((mu_e / mu_e_0) - 1.0)
+    base_sm = (mass_ratio**2) * screening_term * phi_core_ratio
+
+    # Core profile variation: High carbon (flat uniform core) vs Oxygen (steep central spike)
+    if x_carbon >= 0.5:
+        # High-carbon kernel: uniform flat profile across 85% core radius
+        radial_shape = 1.2 - 0.25 * (r_norm**2)
+    else:
+        # Oxygen-rich kernel: steep central gradient, narrow core spike
+        radial_shape = 1.45 / (1.0 + 3.5 * (r_norm**2))
+
+    return base_sm * radial_shape
 
