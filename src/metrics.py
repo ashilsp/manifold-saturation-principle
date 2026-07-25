@@ -601,4 +601,41 @@ def calculate_hypernova_lgrb_metrics(mass_msun: float, spin_j_norm: float, s_m: 
         "e_iso_joules": e_iso_joules,
         "regime": "Hypernova / Long Gamma-Ray Burst (SN 1998bw / GRB 980425)"
     }
+# ==============================================================================
+# PRIMORDIAL GESTATION SITES: DARK STARS AS UN-STENTED NODES (S_M -> 1, z > 15)
+# ==============================================================================
+
+def calculate_dark_star_gestation_metrics(mass_msun: float, redshift_z: float, ambient_kappa_density: float = 1.0e-15) -> dict:
+    """
+    Calculates power output, diffuse basin dimensions, and direct collapse 
+    supermassive black hole (SMBH) seed potential for un-stented dark stars.
+
+    Parameters:
+        mass_msun (float): Gestating node mass in solar masses (10^4 to 10^6 M_sun).
+        redshift_z (float): Cosmological redshift (z > 15 for primordial regime).
+        ambient_kappa_density (float): Ambient metric flux density in 4D network.
+
+    Returns:
+        dict: Infiltration power, Rd status, SMBH seed mass, and regime classification.
+    """
+    mass_kg = mass_msun * SOLAR_MASS
+    
+    # Diffuse un-stented potential basin radius [meters] (much larger than Schwarzschild)
+    radius_diffuse_m = 1.5e11 * (mass_msun / 1.0e5)**(0.5)  # ~1 AU scale for 10^5 M_sun
+    
+    # Power generated from ambient background kappa-flux infiltration [Watts]
+    p_infiltration_watts = 3.828e26 * 1.0e6 * (mass_msun / 1.0e5) * ((1.0 + redshift_z) / 16.0)**3
+    
+    # Direct collapse threshold check: S_M approaches 1 over a broad volume without R_d boundary
+    s_m_diffuse = (G * mass_kg) / (radius_diffuse_m * C**2)
+    
+    return {
+        "s_m_diffuse": s_m_diffuse,
+        "rd_formed": False,
+        "is_un_stented_gestation_node": True,
+        "diffuse_radius_au": radius_diffuse_m / 1.496e11,
+        "infiltration_power_watts": p_infiltration_watts,
+        "smbh_seed_mass_msun": mass_msun,
+        "regime": "Primordial Dark Star Gestation Site (JWST z > 7 Quasar Progenitor)"
+    }
 
