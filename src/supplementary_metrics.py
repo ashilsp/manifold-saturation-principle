@@ -407,4 +407,82 @@ def simulate_eos_tov_trajectory(eos_type: str = "soft", num_points: int = 300) -
         "mass_msun": mass_msun,
         "sm_central": sm_central
     }
+# ==============================================================================
+# ROTATIONAL FRAME-DRAGGING LIMITS (J -> 1 SWEEP) (Section S2.3)
+# ==============================================================================
+
+def calculate_kerr_sm_2d(
+    mass_kg: float,
+    radius_m: float,
+    theta_rad: float,
+    a_star: float,
+    rho_kg_m3: float,
+    alpha_spin: float = 1.0
+) -> float:
+    """
+    Computes 2D angle-dependent Kerr metric saturation scalar S_M(r, theta; a_*):
+        S_M = (D / epsilon_M) * [ (G * M * r) / ((r^2 + a^2 * cos^2(theta)) * c^2)
+                                 + alpha * (a_*^2 * r_s^2) / (r^2 + a^2 * cos^2(theta)) ]
+    """
+    a_star = np.clip(a_star, 0.0, 0.999)
+    rs = (2.0 * G * mass_kg) / (C**2)
+    a_length = a_star * (rs / 2.0)
+    
+    rho_d = rho_kg_m3 / RHO_PLANCK
+    c2 = C**2
+    
+    sigma = (radius_m**2) + (a_length**2) * (np.cos(theta_rad)**2)
+    
+    gravity_term = (G * mass_kg * radius_m) / (sigma * c2)
+    centrifugal_term = alpha_spin * (a_star**2) * (rs**2) / sigma
+    
+    phi_curvature = gravity_term + centrifugal_term
+    
+    sm = (rho_d / EPSILON_M) * phi_curvature
+    return sm
+
+
+def generate_polar_sm_contour_data(
+    mass_kg: float = 10.0 * SOLAR_MASS,
+    a_star: float = 0.0,
+    num_r: int = 100,
+    num_theta: int = 100
+) -> dict:
+    """
+    Generates polar spatial grid coordinate data (R, Theta) and S_M values across a given a_star.
+
+    Returns:
+        dict: r_grid, theta_grid, x_grid, y_grid, sm_grid
+    """
+    rs = (2.0 * G * mass_kg) / (C**2)
+    r_arr = np.linspace(0.8 * rs, 3.5 * rs, num_r)
+    theta_arr = np.linspace(0, np.pi / 2, num_theta)  # Quadrant 0 to pi/2
+    
+    r_grid, theta_grid = np.meshgrid(r_arr, theta_arr)
+    
+    # Estimate density near collapse
+    volume = (4.0 / 3.0) * np.pi * (rs**3)
+    rho = mass_kg / volume
+    
+    sm_grid = np.zeros_like(r_grid)
+    for i in range(num_theta):
+        for j in range(num_r):
+            sm_grid[i, j] = calculate_kerr_sm_2d(
+                mass_kg=mass_kg,
+                radius_m=r_grid[i, j],
+                theta_rad=theta_grid[i, j],
+                a_star=a_star,
+                rho_kg_m3=rho
+            )
+            
+    # Convert polar to Cartesian mapping for plotting
+    x_grid = r_grid * np.sin(theta_grid)  # Equatorial plane
+    y_grid = r_grid * np.cos(theta_grid)  # Polar axis
+    
+    return {
+        "x_grid": x_grid / rs,
+        "y_grid": y_grid / rs,
+        "sm_grid": sm_grid,
+        "a_star": a_star
+    }
 
